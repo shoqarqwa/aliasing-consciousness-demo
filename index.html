@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>Aliasing in Consciousness — Interactive Sampling &amp; Precision</title>
+<style>
+    :root { 
+      --bg:#0b0f14; 
+      --panel:#121925; 
+      --text:#e7edf7; 
+      --muted:#a9b4c5; 
+      --line:#2a3547;
+      --accent:#4f9eff;
+      --drama:#ff7878;
+      --calm:#8cc8ff;
+    }
+    body { 
+      margin:0; 
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; 
+      background:var(--bg); 
+      color:var(--text); 
+    }
+    .wrap {
+      display:grid; 
+      grid-template-columns: var(--leftW, 380px) 10px minmax(0, 1fr); 
+      gap:12px; 
+      padding:16px;
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      box-sizing: border-box;}
+    .card { 
+      background:var(--panel); 
+      border:1px solid var(--line); 
+      border-radius:14px; 
+      padding:16px; 
+      box-shadow: 0 6px 24px rgba(0,0,0,.35); 
+    }
+    h1 { 
+      font-size:18px; 
+      margin:0 0 12px 0; 
+      font-weight:700;
+      color:var(--accent);
+    }
+    h2 { 
+      font-size:13px; 
+      margin:18px 0 10px 0; 
+      color:var(--muted); 
+      font-weight:600; 
+      letter-spacing:.02em; 
+      text-transform: uppercase;
+    }
+    label { 
+      display:block; 
+      font-size:12px; 
+      color:var(--muted); 
+      margin:12px 0 6px; 
+    }
+    input[type="range"] { 
+      width:100%;
+      height: 6px;
+      background: #0d1420;
+      border-radius: 5px;
+      outline: none;
+    }
+    input[type="number"], select {
+      background:#0d1420; 
+      color:var(--text); 
+      border:1px solid var(--line);
+      border-radius:8px; 
+      padding:8px 10px; 
+      outline:none;
+      font-size: 13px;
+      box-sizing: border-box;
+      min-width: 0;
+    }
+    /* Number fields: compact so they don’t collide with long labels */
+    input[type="number"]{ width: 160px; max-width: 100%; }
+    /* Selects stay full-width */
+    select{ width: 100%; }
+
+    input[type="number"]:focus, select:focus {
+      border-color: var(--accent);
+    }
+    .row { 
+      display:grid; 
+      grid-template-columns: minmax(0,1fr) minmax(0,1fr); 
+      gap:10px; 
+    }
+    .row > div{ min-width:0; }
+    .wrap > *{ min-width:0; }
+    .equation-box {
+      background:#0d1420;
+      border: 1px solid var(--line);
+      border-radius:10px;
+      padding:10px;
+      margin: 10px 0;
+      font-family: ui-monospace, monospace;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .equation-box .eq-line {
+      margin: 4px 0;
+      color: var(--text);
+    }
+    .equation-box .eq-label {
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .kpi { 
+      display:grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap:10px; 
+      margin-top:12px; 
+    }
+    .kpi .box { 
+      border:1px solid var(--line); 
+      border-radius:10px; 
+      padding:12px; 
+      background:#0d1420; 
+    }
+    .kpi .label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .kpi .val { 
+      font-size:22px; 
+      font-weight:700; 
+      color: var(--accent);
+    }
+    .preset-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .preset-btn {
+      background: #0d1420;
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .chips{
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      color: var(--muted);
+    }
+    .chip{
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      line-height: 1.6;
+      white-space: nowrap;
+    }
+
+    .preset-desc{
+      margin-top: 4px;
+      font-size: 11px;
+      opacity: 0.75;
+      line-height: 1.25;
+    }
+
+    .preset-btn:hover {
+      border-color: var(--accent);
+      background: #151e2e;
+    }
+    .preset-btn strong {
+      display: block;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .preset-btn .subline {
+      display: block;
+      margin-top: -2px;
+      line-height: 1.05;
+      font-size: 12px;
+    }
+    canvas { 
+      width:100%; 
+      height:580px; 
+      display:block; 
+      border-radius: 8px;
+    }
+    .foot { 
+      font-size:12px; 
+      color:var(--muted); 
+      line-height:1.5; 
+      margin-top: 12px;
+    }
+    .mono { 
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; 
+    }
+    .hint { 
+      font-size:12px; 
+      color:var(--muted); 
+      margin-top:12px; 
+      line-height: 1.5;
+      background: rgba(79, 158, 255, 0.1);
+      padding: 10px;
+      border-radius: 8px;
+      border-left: 3px solid var(--accent);
+    }
+    .paper-ref {
+      background: rgba(79, 158, 255, 0.08);
+      border: 1px solid rgba(79, 158, 255, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      margin: 12px 0;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .paper-ref strong {
+      color: var(--accent);
+      display: block;
+      margin-bottom: 6px;
+    }
+    .paper-ref a {
+      color: #b7f7c2;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .paper-ref a:hover {
+      text-decoration: underline;
+    }
+    .paper-ref .meta-links {
+      margin-top: 6px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 1200px) {
+      .wrap {
+        grid-template-columns: 1fr;
+      }
+    }
+  
+    /* === v3.3.11 UI/UX: keep graph visible while scrolling controls === */
+    .controls-card { min-height: calc(100vh - 32px); }
+
+    .graph-card{
+      position: sticky;
+      top: 16px;
+      align-self: start;
+      height: calc(100vh - 32px);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .graph-card canvas{
+      flex: 1 1 auto;
+      height: auto; /* JS sets exact px height */
+      max-height: none;
+    }
+
+    /* Narrow screens: stack, disable sticky */
+    @media (max-width: 980px){
+      .wrap{ grid-template-columns: 1fr; }
+      .dragbar{ display:none; }
+      input[type="number"]{ width: 100%; }
+      .graph-card{
+        position: relative;
+        top: auto;
+        height: auto;
+      }
+      canvas{ height: 420px; }
+    }
+
+  
+    /* === v2.3.6 UI/UX: draggable divider to resize left panel === */
+    .dragbar{
+      width: 10px;
+      cursor: col-resize;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12);
+      transition: background 120ms ease, border-color 120ms ease;
+      user-select: none;
+      touch-action: none;
+    }
+    .dragbar:hover{ background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.10); }
+    .dragbar:active{ background: rgba(255,255,255,0.12); }
+
+    body.resizing *{ cursor: col-resize !important; user-select: none !important; }
+
+  
+    /* === v3.0.1 UI/UX: hover tooltips (question marks) === */
+    .qmark{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:18px;
+      height:18px;
+      margin-left:8px;
+      border-radius:999px;
+      font-weight:800;
+      font-size:12px;
+      line-height:1;
+      color: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      cursor: help;
+      position: relative;
+      transform: translateY(-1px);
+    }
+    .qmark:hover{
+      background: rgba(255,255,255,0.14);
+      border-color: rgba(255,255,255,0.18);
+    }
+    .qmark[data-tip]::after{
+      content: attr(data-tip);
+      position:absolute;
+      left: 0;
+      transform: translateX(0);
+      margin-left: 10px;
+      width: min(420px, 70vw);
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(15,18,28,0.96);
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      color: rgba(255,255,255,0.92);
+      font-weight: 600;
+      font-size: 12.5px;
+      line-height: 1.35;
+      white-space: normal;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    .qmark[data-tip]::before{
+      content:"";
+      position:absolute;
+      left: 18px;
+      transform: translateX(0);
+      border: 6px solid transparent;
+      border-bottom-color: rgba(15,18,28,0.96);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 10000;
+    }
+    .qmark:hover::after,
+    .qmark:hover::before{
+      opacity: 1;
+    }
+
+  
+    /* === v3.0.5: ensure tooltips are above everything (body-level overlay) === */
+    .card{ overflow: visible; }
+
+    /* Disable pseudo tooltips (we use a fixed overlay tooltip instead) */
+    .qmark[data-tip]::after,
+    .qmark[data-tip]::before{ display:none !important; }
+
+    .aic-tooltip{
+      position: fixed;
+      z-index: 2147483647; /* max-ish */
+      max-width: min(420px, 70vw);
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(15,18,28,0.96);
+      border: 1px solid rgba(255,255,255,0.12);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      color: rgba(255,255,255,0.92);
+      font-weight: 600;
+      font-size: 12.5px;
+      line-height: 1.35;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(-2px);
+      transition: opacity 90ms ease, transform 90ms ease;
+    }
+    .aic-tooltip.show{ opacity: 1; transform: translateY(0); }
+
+    .aic-tooltip::before{
+      content:"";
+      position:absolute;
+      left: 12px;
+      top: -6px;
+      border: 6px solid transparent;
+      border-bottom-color: rgba(15,18,28,0.96);
+    }
+
+  
+    /* === v3.1.6: fixed bottom credit bar === */
+    .bottom-bar{
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2000;
+      background: rgba(8,10,16,0.92);
+      border-top: 1px solid rgba(255,255,255,0.10);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 10px 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+    }
+    .bottom-bar .inner{
+      max-width: 1800px;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .bottom-bar .left,
+    .bottom-bar .right{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .bottom-bar .pill{
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+      font-weight: 700;
+      color: rgba(255,255,255,0.82);
+    }
+    /* prevent content from hiding under fixed bar */
+    body{ padding-bottom: 64px; }
+    /* === v3.1.9: slightly smaller typography in left panel === */
+    .controls-card{ font-size: 13px; }
+    .controls-card h1{ font-size: 20px; }
+    .controls-card h2{ font-size: 14px; }
+    .controls-card label{ font-size: 11px; }
+    .controls-card .paper-ref{ font-size: 12px; }
+    .controls-card .preset-btn{ font-size: 11px; }
+    .controls-card .kpi .label{ font-size: 11px; }
+    .controls-card .kpi .val{ font-size: 20px; }
+
+  </style>
+</head>
+<body>
+<div class="wrap">
+<div class="card controls-card">
+<h1>Aliasing in Consciousness</h1>
+<div class="paper-ref">
+<strong>From the Paper:</strong>
+        Drama arises when coarse sampling (large Δt) and high precision gain (g) make smooth changes appear as discontinuous jumps. Presence dissolves drama by increasing temporal resolution.
+        <div class="meta-links">
+          <a href="https://orcid.org/0009-0006-3076-939X" target="_blank" rel="noopener noreferrer">Author's ORCID</a>
+          <a href="https://doi.org/10.5281/zenodo.19140110" target="_blank" rel="noopener noreferrer">Read the paper</a>
+        </div>
+      </div>
+<div class="hint">
+<strong>Tip:</strong> Increase Δt to see how coarse sampling creates "jumpscares". Increase g to amplify sensitivity. The same underlying reality produces vastly different experiences!
+      </div>
+<h2>Signal Configuration<span class="qmark" data-tip="Controls the shape of the incoming signal over time — the underlying change being sampled by the system. Use it to simulate smoother, sharper, weaker, or stronger events before perception interprets them.">?</span></h2>
+<label>Underlying function x(t)</label>
+<select id="fn">
+<option value="sigmoidPeak">Smooth peak (sigmoid bump)</option>
+<option value="gaussian">Gaussian bump</option>
+<option selected="selected" value="sineRise">Sine wave + ramp</option>
+<option value="stressDay">Gradual stress rise</option>
+</select>
+<h2>Perceptual State Presets</h2>
+<div class="preset-buttons">
+<button class="preset-btn" id="preset-baseline">
+<strong>Reference Condition<br/><span class="subline">(Default Parameterization)</span><span class="qmark" data-tip="Reference condition matching the tool’s initial parameterization. Use as a stable comparison point for changes in sampling (Δt), gain (g), and threshold (D).">?</span></strong>
+<div class="chips"><span class="chip">Δt 1.00</span><span class="chip">g 3.0</span><span class="chip">Prior 1.0</span><span class="chip">D 2.0</span><span class="chip">T 10</span></div>
+</button>
+<button class="preset-btn" id="preset-autopilot">
+<strong>Autopilot<span class="qmark" data-tip="Autopilot represents low-salience, low-reactivity mode: sampling is coarse (larger Δt) but gain/precision is dampened (low g), so prediction errors rarely feel dramatic or cross the threshold.">?</span></strong>
+<div class="chips"><span class="chip">Δt 2.0</span><span class="chip">g 0.4</span><span class="chip">Prior 2.5</span><span class="chip">D 3.5</span><span class="chip">T 10</span></div>
+</button>
+<button class="preset-btn" id="preset-distracted">
+<strong>Distracted<span class="qmark" data-tip="Distracted state: coarse sampling (larger Δt) with typical gain. Updates are less frequent, so changes can appear jumpy or missed, but not necessarily amplified.">?</span></strong>
+<div class="chips"><span class="chip">Δt 2.5</span><span class="chip">g 1.5</span><span class="chip">Prior 1.2</span><span class="chip">D 2.5</span><span class="chip">T 10</span></div>
+</button>
+
+<button class="preset-btn" id="preset-anxious">
+<strong>Anxious<span class="qmark" data-tip="Anxious/hypervigilant state: elevated gain/precision (high g) makes small deviations feel significant, while a lower drama threshold (D) means the system flips into ‘drama mode’ more easily.">?</span></strong>
+<div class="chips"><span class="chip">Δt 0.80</span><span class="chip">g 6.0</span><span class="chip">Prior 1.5</span><span class="chip">D 1.5</span><span class="chip">T 10</span></div>
+</button>
+<button class="preset-btn" id="preset-psychedelic">
+<strong>Psychedelic<span class="qmark" data-tip="Psychedelic state (moderate): elevated precision/gain (higher g) with relatively fine sampling. Prediction errors carry more weight, increasing salience and meaning attribution. Assumes supportive set &amp; setting: it doesn’t stop surprise, but it increases tolerance, trust, and safety (captured here as a higher Drama Threshold D).">?</span></strong>
+<div class="chips"><span class="chip">Δt 0.25</span><span class="chip">g 5.0</span><span class="chip">Prior 0.6</span><span class="chip">D 3</span><span class="chip">T 10</span></div>
+</button>
+<button class="preset-btn" id="preset-psychedelic-peak">
+<strong>Psychedelic (Peak)<span class="qmark" data-tip="Psychedelic peak (high intensity): maximal precision/gain (very high g). Small deviations can become strongly salient; subjective intensity is high even for minor fluctuations. Assumes supportive set &amp; setting: it doesn’t stop surprise, but it increases tolerance, trust, and safety (captured here as a higher Drama Threshold D).">?</span></strong>
+<div class="chips"><span class="chip">Δt 0.25</span><span class="chip">g 10.0</span><span class="chip">Prior 0.3</span><span class="chip">D 1.2</span><span class="chip">T 10</span></div>
+</button>
+<button class="preset-btn" id="preset-mindful">
+<strong>Mindful<span class="qmark" data-tip="Mindful/present state: fine sampling (small Δt) with balanced gain and higher stability. Changes are tracked continuously with reduced narrative escalation.">?</span></strong>
+<div class="chips"><span class="chip">Δt 0.15</span><span class="chip">g 1.0</span><span class="chip">Prior 1.8</span><span class="chip">D 4.0</span><span class="chip">T 10</span></div>
+</button>
+</div>
+<h2>Event Presets</h2>
+<div class="preset-buttons">
+<button class="preset-btn" id="event-moderate">
+<strong>Moderately Dramatic Event</strong>
+          Medium bump (wider, lower amplitude)
+        </button>
+<button class="preset-btn" id="event-high">
+<strong>Highly Dramatic Event</strong>
+          Sharp bump (narrower, higher amplitude)
+        </button>
+</div>
+
+<label>Time window (T) <span class="qmark" data-tip="Duration of the observation period (e.g., seconds per experience).">?</span></label>
+<input id="T" max="60" min="5" step="1" type="number" value="10"/>
+<div class="foot"></div>
+
+<h2>Resolution Lever (Δt)<span class="qmark" data-tip="How often awareness samples experience. Small Δt = mindful presence. Large Δt = distracted/zoomed out.">?</span></h2>
+<label>Sampling interval Δt: <span class="mono" id="dtLbl" style="color:var(--accent)"></span></label>
+<input id="dt" max="3.0" min="0.05" step="0.05" type="range" value="1.00"/>
+<div class="foot"></div>
+<h2>Precision Lever (g)<span class="qmark" data-tip="g = π_PE / π_prior determines sensitivity. High g = amplified perception (anxiety/psychedelics). Low g = dampened (autopilot).">?</span></h2>
+<div class="row">
+<div>
+<label>π_PE (prediction error)</label>
+<input id="piPE" max="20" min="0.05" step="0.1" type="number" value="3.00"/>
+</div>
+<div>
+<label>π_prior (prior belief)</label>
+<input id="piPr" max="20" min="0.05" step="0.1" type="number" value="1.00"/>
+</div>
+</div>
+<div class="foot"></div>
+<h2>Drama Threshold <span class="qmark" data-tip="When g·|Δxₖ| exceeds D, the change feels dramatic.">?</span></h2>
+<label>Threshold D: <span class="mono" id="dLbl" style="color:var(--drama)"></span></label>
+<input id="D" max="10" min="0.1" step="0.1" type="range" value="2.00"/>
+<div class="foot"></div>
+<div class="kpi">
+<div class="box">
+<div class="label mono">Precision Gain</div>
+<div class="val mono" id="gVal">—</div>
+</div>
+<div class="box">
+<div class="label mono">Drama Events</div>
+<div class="val mono" id="dramaCount" style="color:var(--drama)">—</div>
+</div>
+</div>
+<div class="equation-box">
+<div class="eq-label">Core Equations:</div>
+<div class="eq-line">Δxₖ = x(tₖ₊₁) − x(tₖ)</div>
+<div class="eq-line">g = π_PE / π_prior</div>
+<div class="eq-line">|Δxₖ|ₚₑᵣc = g · |Δxₖ|</div>
+<div class="eq-line" style="color:var(--drama)">Drama if: g·|Δxₖ| &gt; D</div>
+</div>
+</div>
+<div class="dragbar" id="dragbar" title="Drag to resize"></div>
+<div class="card graph-card">
+<canvas height="580" id="cv" width="1400"></canvas>
+<div class="foot">
+<strong>Top panel:</strong> Continuous x(t) in white + your discrete samples (step function). Red = drama jump, Blue = manageable change.
+        <br/>
+<strong>Bottom panel:</strong> Perceived jump magnitude |Δxₖ|ₚₑᵣc = g·|Δxₖ| per step. Bars above threshold D (dashed line) indicate drama.
+      </div>
+<div class="foot mono" id="status" style="margin-top:10px; color:var(--accent);"></div>
+</div>
+</div>
+<script>
+(() => {
+  const el = (id) => document.getElementById(id);
+
+  const cv = el("cv");
+  const ctx = cv.getContext("2d");
+
+
+  // === v2.3.1: fit canvas to sticky graph card for laptop/retina friendliness ===
+  const graphCard = document.querySelector(".graph-card");
+
+  function fitCanvasToCard(){
+    if(!graphCard) return;
+
+    const dpr = window.devicePixelRatio || 1;
+
+    const cardStyles = getComputedStyle(graphCard);
+    const padTop = parseFloat(cardStyles.paddingTop) || 0;
+    const padBot = parseFloat(cardStyles.paddingBottom) || 0;
+
+    let extras = 0;
+    graphCard.querySelectorAll(".foot, #status").forEach(el => { extras += el.offsetHeight; });
+
+    const cssW = Math.max(320, graphCard.clientWidth - 2);
+    const cssH = Math.max(260, graphCard.clientHeight - extras - padTop - padBot - 8);
+
+    // CSS size
+    cv.style.width = cssW + "px";
+    cv.style.height = cssH + "px";
+
+    // Backing store for crispness
+    cv.width  = Math.floor(cssW * dpr);
+    cv.height = Math.floor(cssH * dpr);
+
+    draw();
+}
+
+  window.addEventListener("resize", fitCanvasToCard);
+  setTimeout(fitCanvasToCard, 0);
+
+  // === v2.3.6: draggable divider to resize the left panel ===
+  const wrapEl = document.querySelector(".wrap");
+  const dragbar = document.getElementById("dragbar");
+  const LEFT_MIN = 260;
+  const LEFT_MAX = 760;
+
+  function applyLeftWidth(px){
+    const gap = 12; // should match CSS gap
+    const dragW = 10;
+    const wrapW = wrapEl ? wrapEl.clientWidth : 1400;
+    const RIGHT_MIN = 520; // keep graph usable
+    const dynamicMax = Math.max(LEFT_MIN, wrapW - RIGHT_MIN - dragW - gap*2 - 2);
+    const clamped = Math.max(LEFT_MIN, Math.min(dynamicMax, Math.round(px)));
+    if(wrapEl){
+      wrapEl.style.setProperty("--leftW", clamped + "px");
+      wrapEl.style.gridTemplateColumns = `var(--leftW) 10px minmax(0, 1fr)`;
+    }
+    try{ localStorage.setItem("aic_leftW_px", String(clamped)); }catch(e){}
+    // canvas may need refit because right panel width changed
+    if(typeof fitCanvasToCard === "function") fitCanvasToCard();
+  }
+
+  // restore last width
+  (function(){
+    try{
+      const saved = parseInt(localStorage.getItem("aic_leftW_px") || "", 10);
+      if(Number.isFinite(saved)) applyLeftWidth(saved);
+    }catch(e){}
+  })();
+
+  if(dragbar && wrapEl){
+    let dragging = false;
+
+    const onMove = (ev) => {
+      if(!dragging) return;
+      const x = (ev.touches && ev.touches[0]) ? ev.touches[0].clientX : ev.clientX;
+      const rect = wrapEl.getBoundingClientRect();
+      const newW = x - rect.left; // left column width
+      applyLeftWidth(newW);
+      ev.preventDefault?.();
+    };
+
+    const stop = () => {
+      if(!dragging) return;
+      dragging = false;
+      document.body.classList.remove("resizing");
+            if(typeof fitCanvasToCard === "function") fitCanvasToCard();
+window.removeEventListener("pointermove", onMove, {passive:false});
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("touchmove", onMove, {passive:false});
+      window.removeEventListener("touchend", stop);
+    };
+
+    const start = (ev) => {
+      dragging = true;
+      document.body.classList.add("resizing");
+      // capture pointer for smooth drag
+      try{ dragbar.setPointerCapture?.(ev.pointerId); }catch(e){}
+      window.addEventListener("pointermove", onMove, {passive:false});
+      window.addEventListener("pointerup", stop);
+      window.addEventListener("touchmove", onMove, {passive:false});
+      window.addEventListener("touchend", stop);
+      ev.preventDefault?.();
+    };
+
+    dragbar.addEventListener("pointerdown", start);
+    dragbar.addEventListener("touchstart", start, {passive:false});
+  }
+
+
+  const dt = el("dt");
+  const dtLbl = el("dtLbl");
+  const piPE = el("piPE");
+  const piPr = el("piPr");
+  const D = el("D");
+  const dLbl = el("dLbl");
+  const gVal = el("gVal");
+  const dramaCount = el("dramaCount");
+  const fnSel = el("fn");
+  const TIn = el("T");
+  const status = el("status");
+
+  // Preset buttons
+    const presets = {
+    'preset-baseline': { dt: 1.00, piPE: 3.00, piPr: 1.00, D: 2.00, T: 10 },
+    'preset-autopilot': { dt: 2.00, piPE: 0.40, piPr: 2.50, D: 3.50, T: 10 },
+    'preset-distracted': { dt: 2.50, piPE: 1.50, piPr: 1.20, D: 2.50, T: 10 },
+        'preset-anxious': { dt: 0.80, piPE: 9.00, piPr: 1.50, D: 1.50, T: 10 },
+'preset-psychedelic': { dt: 0.25, piPE: 5.00, piPr: 0.60, D: 3.00, T: 10 },
+    'preset-psychedelic-peak': { dt: 0.25, piPE: 10.00, piPr: 0.30, D: 1.20, T: 10 },
+    'preset-mindful': { dt: 0.15, piPE: 1.00, piPr: 1.80, D: 4.00, T: 10 }
+  };
+
+    Object.keys(presets).forEach(id => {
+    el(id).addEventListener('click', () => {
+      const p = presets[id];      if(typeof p.T !== 'undefined') TIn.value = p.T;
+      if(typeof p.D !== 'undefined') D.value = p.D;
+      if(typeof p.dt !== 'undefined') dt.value = p.dt;
+      if(typeof p.piPE !== 'undefined') piPE.value = p.piPE;
+      if(typeof p.piPr !== 'undefined') piPr.value = p.piPr;
+      if(typeof p.A !== 'undefined') GAUSS_A = p.A;
+      if(typeof p.sigmaFrac !== 'undefined') GAUSS_SIGMA_FRAC = p.sigmaFrac;
+      draw();
+    });
+  });
+// Event presets (change x(t) only; keep perception state)
+  const eventPresets = {
+    'event-moderate': { fn: 'gaussian', A: 1.0, sigmaFrac: 0.14 },
+    'event-high': { fn: 'gaussian', A: 2.2, sigmaFrac: 0.07 }
+  };
+  Object.keys(eventPresets).forEach(id => {
+    const btn = document.getElementById(id);
+    if(!btn) return;
+    btn.addEventListener('click', () => {
+      const e = eventPresets[id];
+      fnSel.value = e.fn;
+      GAUSS_A = e.A;
+      GAUSS_SIGMA_FRAC = e.sigmaFrac;
+      draw();
+    });
+  });
+
+  // --------- Underlying functions x(t) ----------
+  // Gaussian shape parameters (modifiable via Event Presets)
+  let GAUSS_A = 1.3;
+  let GAUSS_SIGMA_FRAC = 0.12; // sigma as fraction of T
+
+  function x_sigmoidPeak(t, T) {
+    const a = 7.0;
+    const c1 = 0.38 * T, c2 = 0.62 * T;
+    const s1 = 1 / (1 + Math.exp(-a*(t - c1)));
+    const s2 = 1 / (1 + Math.exp(-a*(t - c2)));
+    return (s1 - s2) * 1.3;
+  }
+
+    function x_gaussian(t, T) {
+    const mu = 0.5 * T;
+    const sigma = Math.max(1e-6, GAUSS_SIGMA_FRAC * T);
+    const z = (t - mu) / sigma;
+    return GAUSS_A * Math.exp(-0.5 * z * z);
+  }
+
+  function x_sineRise(t, T) {
+    const ramp = (t / T) * 0.9;
+    const wave = Math.sin((t / T) * Math.PI * 3) * 0.35;
+    const bump = Math.exp(-0.5 * Math.pow((t - 0.7*T) / (0.06*T), 2)) * 0.9;
+    return ramp + wave + bump;
+  }
+
+  function x_stressDay(t, T) {
+    // Gradual stress rise like in the paper example
+    const base = 0.2;
+    const slope = 0.75 / (T/8); // normalized to time window
+    return base + slope * t;
+  }
+
+  function xOf(t, T) {
+    const v = fnSel.value;
+    if (v === "gaussian") return x_gaussian(t, T);
+    if (v === "sineRise") return x_sineRise(t, T);
+    if (v === "stressDay") return x_stressDay(t, T);
+    return x_sigmoidPeak(t, T);
+  }
+
+  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+
+  function compute() {
+    const T = clamp(parseFloat(TIn.value || 20), 5, 60);
+    const N = 1200; // Fixed rendering resolution
+    const deltaT = parseFloat(dt.value);
+    const pi_pe = parseFloat(piPE.value);
+    const pi_pr = parseFloat(piPr.value);
+    const g = (pi_pr === 0) ? Infinity : (pi_pe / pi_pr);
+    const thr = parseFloat(D.value);
+
+    dtLbl.textContent = deltaT.toFixed(2);
+    dLbl.textContent = thr.toFixed(2);
+    gVal.textContent = Number.isFinite(g) ? g.toFixed(2) : "∞";
+
+    // Continuous curve
+    const ts = new Array(N);
+    const xs = new Array(N);
+    for (let i=0;i<N;i++){
+      const t = (i/(N-1))*T;
+      ts[i]=t;
+      xs[i]=xOf(t, T);
+    }
+
+    // Discrete samples
+    const tSamples = [];
+    for (let t=0; t<=T + 1e-9; t += deltaT) tSamples.push(t);
+    if (tSamples.length === 0 || tSamples[tSamples.length-1] < T) tSamples.push(T);
+
+    const xSamples = tSamples.map(t => xOf(t, T));
+
+    // Compute frame-to-frame changes and perceived jumps
+    const deltas = [];
+    const perc = [];
+    const dramaIdx = [];
+    for (let k=0; k<xSamples.length-1; k++){
+      const dx = xSamples[k+1] - xSamples[k];
+      deltas.push(dx);
+      // Paper equation: |Δxₖ|ₚₑᵣc = g · |Δxₖ|
+      // Where |Δxₖ| ≈ |x'(t)| · Δt (first-order approximation)
+      // We use exact |Δxₖ| which is more accurate
+      const p = Math.abs(dx) * g;
+      perc.push(p);
+      if (p > thr) dramaIdx.push(k);
+    }
+    dramaCount.textContent = dramaIdx.length.toString();
+
+    return {T, N, ts, xs, tSamples, xSamples, deltas, perc, dramaIdx, g, thr, deltaT};
+  }
+
+  function draw() {
+    const dpr = window.devicePixelRatio || 1;
+    // Always reset transform so resizing never accumulates scaling/zoom
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const W = cv.width / dpr, H = cv.height / dpr;
+    ctx.clearRect(0,0,W,H);
+
+    const data = compute();
+
+    // Layout
+    const pad = 50;
+    const topH = Math.floor(H*0.58);
+    const botY = topH + 20;
+    const botH = H - botY - 20;
+
+    // Y-ranges
+    let xmin=Infinity, xmax=-Infinity;
+    for (const v of data.xs){ xmin=Math.min(xmin,v); xmax=Math.max(xmax,v); }
+    for (const v of data.xSamples){ xmin=Math.min(xmin,v); xmax=Math.max(xmax,v); }
+    const xpad = (xmax-xmin)*0.12 + 1e-9;
+    xmin -= xpad; xmax += xpad;
+
+    let pmax = Math.max(data.thr*1.3, ...data.perc, 0.5);
+
+    // Coordinate maps
+    const xToPx = (t) => pad + (t/data.T) * (W - pad*2);
+    const yToPxTop = (x) => pad + (1 - (x - xmin)/(xmax-xmin)) * (topH - pad*2);
+    const yToPxBot = (p) => botY + 12 + (1 - (p / pmax)) * (botH - 28);
+
+    // Grid helper
+    function drawGrid(regionTop, regionH, yMin, yMax, yMapFn) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.08)";
+      ctx.lineWidth = 1;
+
+      // Vertical lines (time)
+      for (let i=0;i<=10;i++){
+        const t = (i/10)*data.T;
+        const x = xToPx(t);
+        ctx.beginPath();
+        ctx.moveTo(x, regionTop+pad*0.3);
+        ctx.lineTo(x, regionTop+regionH-pad*0.3);
+        ctx.stroke();
+      }
+
+      // Horizontal lines
+      for (let j=0;j<=6;j++){
+        const frac = j/6;
+        const yVal = yMin + (1-frac)*(yMax-yMin);
+        const y = yMapFn(yVal);
+        ctx.beginPath();
+        ctx.moveTo(pad, y);
+        ctx.lineTo(W-pad, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Axis labels
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.5)";
+      ctx.font = "11px ui-monospace, monospace";
+      
+      // Time labels (x-axis)
+      for (let i=0;i<=10;i++){
+        const t = (i/10)*data.T;
+        const x = xToPx(t);
+        ctx.fillText(t.toFixed(1), x-12, regionTop+regionH-8);
+      }
+
+      // Y-axis labels
+      for (let j=0;j<=6;j++){
+        const frac = j/6;
+        const yVal = yMin + (1-frac)*(yMax-yMin);
+        const y = yMapFn(yVal);
+        ctx.fillText(yVal.toFixed(2), 6, y+4);
+      }
+      ctx.restore();
+    }
+
+    drawGrid(0, topH, xmin, xmax, yToPxTop);
+    drawGrid(botY, botH, 0, pmax, yToPxBot);
+
+    // Panel titles
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    ctx.font = "13px ui-sans-serif, system-ui";
+    ctx.fillText("Continuous x(t) + Sampled Steps", pad, 22);
+    ctx.fillText("Perceived Jump Magnitude: |Δxₖ|ₚₑᵣc = g·|Δxₖ|", pad, botY+22);
+    ctx.restore();
+
+    // Axis labels
+    ctx.save();
+    ctx.fillStyle = "rgba(255,255,255,0.6)";
+    ctx.font = "11px ui-sans-serif, system-ui";
+    ctx.fillText("Time (t)", W/2-20, topH-8);
+    ctx.fillText("Intensity", 8, pad-10);
+    ctx.fillText("Time (t)", W/2-20, H-6);
+    ctx.fillText("Jump Size", 8, botY+32);
+    ctx.restore();
+
+    // Draw continuous x(t)
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,0.75)";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    for (let i=0;i<data.ts.length;i++){
+      const px = xToPx(data.ts[i]);
+      const py = yToPxTop(data.xs[i]);
+      if (i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // Draw sampled steps
+    ctx.save();
+    ctx.lineWidth = 2.5;
+
+    for (let k=0;k<data.tSamples.length-1;k++){
+      const t0=data.tSamples[k], t1=data.tSamples[k+1];
+      const x0=data.xSamples[k], x1=data.xSamples[k+1];
+      const p = data.perc[k];
+      const isDrama = p > data.thr;
+
+      ctx.strokeStyle = isDrama ? "rgba(255,120,120,0.95)" : "rgba(140,200,255,0.85)";
+      ctx.beginPath();
+      ctx.moveTo(xToPx(t0), yToPxTop(x0));
+      ctx.lineTo(xToPx(t1), yToPxTop(x0));
+      ctx.lineTo(xToPx(t1), yToPxTop(x1));
+      ctx.stroke();
+
+      // Sample points
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      ctx.beginPath();
+      ctx.arc(xToPx(t0), yToPxTop(x0), 3.5, 0, Math.PI*2);
+      ctx.fill();
+      if (k===data.tSamples.length-2){
+        ctx.beginPath();
+        ctx.arc(xToPx(t1), yToPxTop(x1), 3.5, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+
+    // Bottom: perceived jump bars
+    const barW = Math.max(2, (W - pad*2) / Math.max(1, data.perc.length));
+    ctx.save();
+    for (let k=0;k<data.perc.length;k++){
+      const p = data.perc[k];
+      const x0 = pad + k*barW;
+      const y0 = yToPxBot(p);
+      const yBase = yToPxBot(0);
+      const h = yBase - y0;
+      const isDrama = p > data.thr;
+
+      ctx.fillStyle = isDrama ? "rgba(255,120,120,0.85)" : "rgba(140,200,255,0.65)";
+      ctx.fillRect(x0+1, y0, Math.max(1, barW-2), Math.max(1, h));
+    }
+    ctx.restore();
+
+    // Drama threshold line
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,0.85)";
+    ctx.setLineDash([8,6]);
+    ctx.lineWidth = 2;
+    const yD = yToPxBot(data.thr);
+    ctx.beginPath();
+    ctx.moveTo(pad, yD);
+    ctx.lineTo(W-pad, yD);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(255,255,255,0.95)";
+    ctx.font = "12px ui-monospace, monospace";
+    ctx.fillText("Threshold D = " + data.thr.toFixed(2), W-pad-130, yD-8);
+    ctx.restore();
+
+    // Status
+    status.textContent =
+      `Δt=${data.deltaT.toFixed(2)} | π_PE=${(+piPE.value).toFixed(2)} | π_prior=${(+piPr.value).toFixed(2)} | g=${data.g.toFixed(2)} | D=${data.thr.toFixed(2)} | samples=${data.perc.length} | drama=${data.dramaIdx.length}`;
+  }
+
+  // Event bindings
+  [dt, piPE, piPr, D, fnSel, TIn].forEach(node => {
+    node.addEventListener("input", draw);
+    node.addEventListener("change", draw);
+  });
+
+  draw();
+})();
+
+  // === v3.0.5: tooltip overlay that is never clipped ===
+  const tooltipEl = document.createElement("div");
+  tooltipEl.className = "aic-tooltip";
+  document.body.appendChild(tooltipEl);
+
+  let tipTarget = null;
+
+  function positionTooltip(target){
+    const rect = target.getBoundingClientRect();
+    const pad = 10;
+
+    tooltipEl.textContent = target.getAttribute("data-tip") || "";
+    tooltipEl.style.left = "0px";
+    tooltipEl.style.top = "0px";
+    tooltipEl.classList.add("show");
+
+    // Measure after setting text
+    const tipRect = tooltipEl.getBoundingClientRect();
+
+    // Prefer to the right; if not enough space, flip left
+    let left = rect.right + 10;
+    if(left + tipRect.width + pad > window.innerWidth){
+      left = rect.left - tipRect.width - 10;
+    }
+    left = Math.max(pad, Math.min(window.innerWidth - tipRect.width - pad, left));
+
+    // Prefer below; if not enough space, go above
+    let top = rect.bottom + 10;
+    if(top + tipRect.height + pad > window.innerHeight){
+      top = rect.top - tipRect.height - 10;
+      // flip arrow to bottom if above
+      tooltipEl.style.setProperty("--arrowTop", "auto");
+    }
+    top = Math.max(pad, Math.min(window.innerHeight - tipRect.height - pad, top));
+
+    tooltipEl.style.left = left + "px";
+    tooltipEl.style.top  = top + "px";
+
+    // Arrow: place near the ?
+    const arrowLeft = Math.max(12, Math.min(tipRect.width - 18, rect.left + rect.width/2 - left));
+    tooltipEl.style.setProperty("--arrowLeftPx", arrowLeft + "px");
+  }
+
+  // update arrow position via inline style on ::before (CSS vars)
+  const styleTag = document.createElement("style");
+  styleTag.textContent = `.aic-tooltip::before{ left: var(--arrowLeftPx, 12px); }`;
+  document.head.appendChild(styleTag);
+
+  function showTip(e){
+    const t = e.currentTarget;
+    tipTarget = t;
+    positionTooltip(t);
+  }
+  function hideTip(){
+    tipTarget = null;
+    tooltipEl.classList.remove("show");
+  }
+
+  document.querySelectorAll(".qmark[data-tip]").forEach(el=>{
+    el.addEventListener("mouseenter", showTip);
+    el.addEventListener("mouseleave", hideTip);
+    el.addEventListener("focus", showTip);
+    el.addEventListener("blur", hideTip);
+  });
+
+  window.addEventListener("scroll", ()=>{ if(tipTarget) positionTooltip(tipTarget); }, {passive:true});
+  window.addEventListener("resize", ()=>{ if(tipTarget) positionTooltip(tipTarget); });
+
+
+  // v3.1.6: bottom bar year
+  (function(){ const y=document.getElementById("yearNow"); if(y) y.textContent = String(new Date().getFullYear()); })();
+
+</script>
+<div aria-label="Credits" class="bottom-bar" role="contentinfo">
+<div class="inner">
+<div class="left">
+<span class="pill">Aliasing in Consciousness Tool</span>
+<span>Developed by <strong>Adam Asmaeil</strong></span>
+</div>
+<div class="right">
+<span class="mono">v3.3.9</span>
+<span class="mono">© <span id="yearNow"></span> Adam Asmaeil</span>
+<span>All rights reserved. Unauthorized reproduction, distribution, or modification is prohibited.</span>
+</div>
+</div>
+</div>
+</body>
+</html>
